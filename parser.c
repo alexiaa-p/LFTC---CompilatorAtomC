@@ -4,12 +4,13 @@
 #include <stdbool.h>
 
 #include "parser.h"
+#include "utils.h"
 
-Token *iTk;        // iteratorul in lista de atomi
-Token *consumedTk; // ultimul atom consumat
+Token* itk;        // iteratorul in lista de atomi
+Token* consumedtk; // ultimul atom consumat
 
-void tkerr(const char *fmt, ...) {
-    fprintf(stderr, "error in line %d: ", iTk->line);
+void tkerr(const char* fmt, ...) {
+    fprintf(stderr, "error in line %d: ", itk->line);
     va_list va;
     va_start(va, fmt);
     vfprintf(stderr, fmt, va);
@@ -19,453 +20,625 @@ void tkerr(const char *fmt, ...) {
 }
 
 bool consume(int code) {
-    if (iTk->code == code) {
-        consumedTk = iTk;
-        iTk = iTk->next;
+    if (itk->code == code) {
+        consumedtk = itk;
+        itk = itk->next;
         return true;
     }
     return false;
 }
 
-// Forward declarations
+// forward declarations
 bool expr();
 bool stm();
-bool stmCompound();
+bool stmcompound();
 
-
-
-// typeBase: TYPE_INT | TYPE_DOUBLE | TYPE_CHAR | STRUCT ID
-bool typeBase() {
-    Token *start = iTk;
-
+// typebase: type_int | type_double | type_char | struct id
+bool typebase() {
     if (consume(TYPE_INT))    return true;
     if (consume(TYPE_DOUBLE)) return true;
     if (consume(TYPE_CHAR))   return true;
-
     if (consume(STRUCT)) {
         if (consume(ID)) return true;
-        tkerr("lipseste numele structurii dupa struct");
+        else tkerr("expected struct name");
     }
-
-    iTk = start;
     return false;
 }
 
-
-
-// arrayDecl: LBRACKET INT? RBRACKET
-bool arrayDecl() {
-    Token *start = iTk;
-
+// arraydecl: lbracket int? rbracket
+bool arraydecl() {
     if (consume(LBRACKET)) {
-        consume(INT); // optional — ex: char s[]
-        if (consume(RBRACKET)) return true;
-        tkerr("lipseste ] in declaratia de array");
+        if (consume(INT)) {}
+        if (consume(RBRACKET))
+            return true;
+        else
+            tkerr("expected ']' after array declaration");
     }
-
-    iTk = start;
     return false;
 }
 
-
-
-// varDef: typeBase ID arrayDecl? SEMICOLON
-bool varDef() {
-    Token *start = iTk;
-
-    if (!typeBase()) {
-        iTk = start;
-        return false;
+// vardef: typebase id arraydecl? semicolon
+bool vardef() {
+    if (typebase()) {
+        if (consume(ID)) {
+            if (arraydecl()) {}
+            if (consume(SEMICOLON))
+                return true;
+            else
+                tkerr("expected ';' after variable definition");
+        }
+        else
+            tkerr("expected variable name or function identifier or missing { for struct definition");
     }
-
-    if (!consume(ID)) {
-        iTk = start;
-        return false;
-    }
-
-    arrayDecl(); // optional
-
-    if (!consume(SEMICOLON))
-        tkerr("lipseste ; dupa definitia variabilei");
-
-    return true;
+    return false;
 }
 
-
-// structDef: STRUCT ID LACC varDef* RACC SEMICOLON
-bool structDef() {
-    Token *start = iTk;
-
-    if (!consume(STRUCT)) return false;
-
-    if (!consume(ID)) {
-        iTk = start;
-        return false;
-    }
-
-    if (!consume(LACC)) {
-        iTk = start;  // ← return false, nu tkerr!
-        return false; // poate fi varDef de tip struct
-    }
-
-    while (varDef()) {}
-
-    if (!consume(RACC))
-        tkerr("lipseste } in definitia structurii");
-
-    if (!consume(SEMICOLON))
-        tkerr("lipseste ; dupa definitia structurii");
-
-    return true;
-}
-
-
-// fnParam: typeBase ID arrayDecl?
-bool fnParam() {
-    Token *start = iTk;
-
-    if (!typeBase()) {
-        iTk = start;
-        return false;
-    }
-
-    if (!consume(ID)) {
-        iTk = start;
-        return false;
-    }
-
-    arrayDecl(); // optional
-
-    return true;
-}
-
-
-
-// fnDef: ( typeBase | VOID ) ID LPAR ( fnParam ( COMMA fnParam )* )? RPAR stmCompound
-bool fnDef() {
-    Token *start = iTk;
-
-    if (!typeBase()) {
-        if (!consume(VOID)) {
-            iTk = start;
-            return false;
+// structdef: struct id lacc vardef* racc semicolon
+bool structdef() {
+    Token* start = itk;
+    if (consume(STRUCT)) {
+        if (consume(ID)) {
+            if (consume(LACC)) {
+                for (;;) {
+                    if (vardef());
+                    else break;
+                }
+                if (consume(RACC)) {
+                    if (consume(SEMICOLON))
+                        return true;
+                    else
+                        tkerr("expected ';' after struct definition");
+                }
+                else
+                    tkerr("expected '}' after struct definition or invalid expression in struct definition");
+            }
         }
     }
-
-    if (!consume(ID)) {
-        iTk = start;
-        return false;
-    }
-
-    if (!consume(LPAR)) {
-        // Poate fi varDef, nu fnDef — refacem tot
-        iTk = start;
-        return false;
-    }
-
-    if (fnParam()) {
-        while (consume(COMMA)) {
-            if (!fnParam())
-                tkerr("parametru invalid dupa ,");
-        }
-    }
-
-    if (!consume(RPAR))
-        tkerr("lipseste ) in definitia functiei");
-
-    if (!stmCompound())
-        tkerr("lipseste corpul { } al functiei");
-
-    return true;
+    itk = start;
+    return false;
 }
 
-// exprPrimary: ID ( LPAR ( expr ( COMMA expr )* )? RPAR )?
-//            | INT | DOUBLE | CHAR | STRING
-//            | LPAR expr RPAR
-bool exprPrimary() {
-    Token *start = iTk;
+// fnparam: typebase id arraydecl?
+bool fnparam() {
+    if (typebase()) {
+        if (consume(ID)) {
+            if (arraydecl()) {}
+            return true;
+        }
+        else
+            tkerr("expected parameter name");
+    }
+    return false;
+}
 
+// fndef: ( typebase | void ) id lpar ( fnparam ( comma fnparam )* )? rpar stmcompound
+bool fndef() {
+    Token* start = itk;
+    if (typebase() || consume(VOID)) {
+        if (consume(ID)) {
+            if (consume(LPAR)) {
+                if (fnparam()) {
+                    while (consume(COMMA)) {
+                        if (!fnparam())
+                            tkerr("missing or invalid parameter after ',' in function definition");
+                    }
+                }
+                if (consume(RPAR)) {
+                    if (stmcompound())
+                        return true;
+                    else
+                        tkerr("expected compound statement after function declaration or invalid expression in function definition");
+                }
+                else
+                    tkerr("expected ')' after function parameters or invalid expression in function definition");
+            }
+        }
+        // Daca nu gasim ID sau LPAR, facem doar backtrack
+    }
+    itk = start;
+    return false;
+}
+// exprprimary: id ( lpar ( expr ( comma expr )* )? rpar )?
+//            | int | double | char | string
+//            | lpar expr rpar
+bool exprprimary() {
     if (consume(ID)) {
         if (consume(LPAR)) {
             if (expr()) {
                 while (consume(COMMA)) {
                     if (!expr())
-                        tkerr("expresie invalida dupa , in apelul de functie");
+                        tkerr("expected expression after ',' in function call");
                 }
             }
-            if (!consume(RPAR))
-                tkerr("lipseste ) in apelul de functie");
-        }
-        return true;
-    }
-
-    if (consume(INT))    return true;
-    if (consume(DOUBLE)) return true;
-    if (consume(CHAR))   return true;
-    if (consume(STRING)) return true;
-
-    if (consume(LPAR)) {
-        if (expr()) {
-            if (!consume(RPAR))
-                tkerr("lipseste ) in expresie");
-            return true;
-        }
-        iTk = start;  // ← backtrack, lasa exprCast sa incerce
-        return false;
-    }
-
-    iTk = start;
-    return false;
-}
-// exprPostfix (recursivitate stanga eliminata):
-// exprPostfix:    exprPrimary exprPostfixPrim
-// exprPostfixPrim: LBRACKET expr RBRACKET exprPostfixPrim | DOT ID exprPostfixPrim | ε
-bool exprPostfixPrim() {
-    if (consume(LBRACKET)) {
-        if (!expr())
-            tkerr("expresie invalida in indexare");
-        if (!consume(RBRACKET))
-            tkerr("lipseste ] in indexare");
-        exprPostfixPrim();
-        return true;
-    }
-    if (consume(DOT)) {
-        if (!consume(ID))
-            tkerr("lipseste numele campului dupa .");
-        exprPostfixPrim();
-        return true;
-    }
-    return true; // epsilon
-}
-
-bool exprPostfix() {
-    Token *start = iTk;
-    if (!exprPrimary()) {
-        iTk = start;
-        return false;
-    }
-    exprPostfixPrim();
-    return true;
-}
-
-
-
-// exprUnary: ( SUB | NOT ) exprUnary | exprPostfix
-bool exprUnary() {
-    if (consume(SUB) || consume(NOT)) {
-        if (!exprUnary())
-            tkerr("expresie invalida dupa operator unar");
-        return true;
-    }
-    return exprPostfix();
-}
-
-
-
-// exprCast: LPAR typeBase arrayDecl? RPAR exprCast | exprUnary
-bool exprCast() {
-    Token *start = iTk;
-
-    if (consume(LPAR)) {
-        if (typeBase()) {
-            arrayDecl();
             if (consume(RPAR)) {
-                if (!exprCast())
-                    tkerr("expresie invalida dupa cast");
                 return true;
             }
-        }
-        iTk = start;  // nu e cast
-    }
-
-    return exprUnary();  // exprUnary → exprPostfix → exprPrimary va incerca (expr)
-}
-
-
-// exprMul: exprCast ( ( MUL | DIV ) exprCast )*
-bool exprMul() {
-    Token *start = iTk;
-    if (!exprCast()) { iTk = start; return false; }
-    while (consume(MUL) || consume(DIV)) {
-        if (!exprCast())
-            tkerr("expresie invalida dupa * sau /");
-    }
-    return true;
-}
-
-
-// exprAdd: exprMul ( ( ADD | SUB ) exprMul )*
-bool exprAdd() {
-    Token *start = iTk;
-    if (!exprMul()) { iTk = start; return false; }
-    while (consume(ADD) || consume(SUB)) {
-        if (!exprMul())
-            tkerr("expresie invalida dupa + sau -");
-    }
-    return true;
-}
-
-
-// exprRel: exprAdd ( ( LESS | LESSEQ | GREATER | GREATEREQ ) exprAdd )*
-bool exprRel() {
-    Token *start = iTk;
-    if (!exprAdd()) { iTk = start; return false; }
-    while (consume(LESS) || consume(LESSEQ) || consume(GREATER) || consume(GREATEREQ)) {
-        if (!exprAdd())
-            tkerr("expresie invalida dupa operator relational");
-    }
-    return true;
-}
-
-
-// exprEq: exprRel ( ( EQUAL | NOTEQ ) exprRel )*
-bool exprEq() {
-    Token *start = iTk;
-    if (!exprRel()) { iTk = start; return false; }
-    while (consume(EQUAL) || consume(NOTEQ)) {
-        if (!exprRel())
-            tkerr("expresie invalida dupa == sau !=");
-    }
-    return true;
-}
-
-
-// exprAnd: exprEq ( AND exprEq )*
-bool exprAnd() {
-    Token *start = iTk;
-    if (!exprEq()) { iTk = start; return false; }
-    while (consume(AND)) {
-        if (!exprEq())
-            tkerr("expresie invalida dupa &&");
-    }
-    return true;
-}
-
-
-// exprOr: exprAnd ( OR exprAnd )*
-bool exprOr() {
-    Token *start = iTk;
-    if (!exprAnd()) { iTk = start; return false; }
-    while (consume(OR)) {
-        if (!exprAnd())
-            tkerr("expresie invalida dupa ||");
-    }
-    return true;
-}
-
-
-// exprAssign: exprUnary ASSIGN exprAssign | exprOr
-bool exprAssign() {
-    Token *start = iTk;
-
-    // Salvăm pozitia, incercam exprUnary ASSIGN exprAssign
-    Token *startAssign = iTk;
-    if (exprUnary()) {
-        if (consume(ASSIGN)) {
-            if (!exprAssign())
-                tkerr("expresie invalida dupa =");
-            return true;
-        }
-    }
-    // Nu a fost assignment — resetam si incercam exprOr de la inceput
-    iTk = startAssign;
-    return exprOr();
-}
-
-
-// expr: exprAssign
-bool expr() {
-    return exprAssign();
-}
-
-// stmCompound: LACC ( varDef | stm )* RACC
-bool stmCompound() {
-    Token *start = iTk;
-
-    if (!consume(LACC)) { iTk = start; return false; }
-
-    for (;;) {
-        if (varDef()) continue;
-        if (stm())    continue;
-        break;
-    }
-
-    if (!consume(RACC))
-        tkerr("lipseste } la sfarsitul blocului");
-
-    return true;
-}
-
-// stm: stmCompound
-//    | IF LPAR expr RPAR stm ( ELSE stm )?
-//    | WHILE LPAR expr RPAR stm
-//    | RETURN expr? SEMICOLON
-//    | expr? SEMICOLON
-bool stm() {
-    Token *start = iTk;
-
-    if (stmCompound()) return true;
-
-    if (consume(IF)) {
-        if (!consume(LPAR))
-            tkerr("lipseste ( dupa if");
-        if (!expr())
-            tkerr("conditie invalida in if");
-        if (!consume(RPAR))
-            tkerr("lipseste ) dupa conditia if");
-        if (!stm())
-            tkerr("lipseste instructiunea din if");
-        if (consume(ELSE)) {
-            if (!stm())
-                tkerr("lipseste instructiunea din else");
+            else {
+                tkerr("expected ')' after function call arguments or invalid expression in function call");
+            }
         }
         return true;
     }
-
-    if (consume(WHILE)) {
-        if (!consume(LPAR))
-            tkerr("lipseste ( dupa while");
-        if (!expr())
-            tkerr("conditie invalida in while");
-        if (!consume(RPAR))
-            tkerr("lipseste ) dupa conditia while");
-        if (!stm())
-            tkerr("lipseste instructiunea din while");
+    if (consume(INT) || consume(DOUBLE) || consume(CHAR) || consume(STRING)) {
         return true;
     }
-
-    if (consume(RETURN)) {
-        expr(); // optional
-        if (!consume(SEMICOLON))
-            tkerr("lipseste ; dupa return");
-        return true;
+    if (consume(LPAR)) {
+        if (expr()) {
+            if (consume(RPAR)) {
+                return true;
+            }
+            else {
+                tkerr("expected ')' after expression or invalid expression in parentheses");
+            }
+        }
+        else {
+            tkerr("invalid or missing expression after '('");
+        }
     }
-
-    // expr? SEMICOLON
-    expr(); // optional
-    if (consume(SEMICOLON)) return true;
-
-    iTk = start;
     return false;
 }
 
-
-// unit: ( structDef | fnDef | varDef )* END
-bool unit() {
-    for (;;) {
-        if (structDef()) continue;
-        if (fnDef())     continue;
-        if (varDef())    continue;
-        break;
+// exprpostfixprim: lbracket expr rbracket exprpostfixprim | dot id exprpostfixprim | ε
+bool exprpostfixprim() {
+    if (consume(LBRACKET)) {
+        if (expr()) {
+            if (consume(RBRACKET)) {
+                if (exprpostfixprim()) {
+                    return true;
+                }
+                else {
+                    tkerr("invalid or missing expression after array access");
+                }
+            }
+            else {
+                tkerr("expected ']' after array access or invalid expression in array access");
+            }
+        }
+        else {
+            tkerr("invalid or missing expression after '[' in array access");
+        }
     }
-    if (!consume(END))
-        tkerr("eroare de sintaxa");
+    else if (consume(DOT)) {
+        if (consume(ID)) {
+            if (exprpostfixprim()) {
+                return true;
+            }
+            else {
+                tkerr("invalid or missing expression after member access");
+            }
+        }
+        else {
+            tkerr("expected member name after '.' in member access");
+        }
+    }
     return true;
 }
 
-void parse(Token *tokens) {
-    iTk = tokens;
-   //for(Token *t = tokens; t; t = t->next)
-        //printf("linia %d: cod %d\n", t->line, t->code);
-    unit();
+// exprpostfix: exprprimary exprpostfixprim
+bool exprpostfix() {
+    if (exprprimary()) {
+        if (exprpostfixprim()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// exprunary: ( sub | not ) exprunary | exprpostfix
+bool exprunary() {
+    if (consume(SUB) || consume(NOT)) {
+        if (exprunary()) {
+            return true;
+        }
+        else {
+            tkerr("invalid or missing expression after unary operator");
+        }
+    }
+    else {
+        if (exprpostfix()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// exprcast: lpar typebase arraydecl? rpar exprcast | exprunary
+bool exprcast() {
+    if (consume(LPAR)) {
+        if (typebase()) {
+            if (arraydecl()) {}
+            if (consume(RPAR)) {
+                if (exprcast()) {
+                    return true;
+                }
+                else {
+                    tkerr("invalid or missing expression after cast");
+                }
+            }
+            else {
+                tkerr("expected ')' after cast type or invalid expression in cast");
+            }
+        }
+        else {
+            tkerr("expected type in cast");
+        }
+    }
+    else {
+        if (exprunary()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// exprmul: exprcast exprMulPrim
+bool exprmulprim() {
+    if (consume(MUL)) {
+        if (exprcast()) {
+            if (exprmulprim()) {
+                return true;
+            }
+            else {
+                tkerr("invalid or missing expression after '*'");
+            }
+        }
+        else {
+            tkerr("invalid or missing expression after '*'");
+        }
+    }
+    if (consume(DIV)) {
+        if (exprcast()) {
+            if (exprmulprim()) {
+                return true;
+            }
+            else {
+                tkerr("invalid or missing expression after '/'");
+            }
+        }
+        else {
+            tkerr("invalid or missing expression after '/'");
+        }
+    }
+    return true;
+}
+bool exprmul() {
+    if (exprcast()) {
+        if (exprmulprim()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// expradd: exprmul exprAddPrim
+bool expraddprim() {
+    if (consume(ADD)) {
+        if (exprmul()) {
+            if (expraddprim()) {
+                return true;
+            }
+            else {
+                tkerr("invalid or missing expression after '+'");
+            }
+        }
+        else {
+            tkerr("invalid or missing expression after '+'");
+        }
+    }
+    if (consume(SUB)) {
+        if (exprmul()) {
+            if (expraddprim()) {
+                return true;
+            }
+            else {
+                tkerr("invalid or missing expression after '-'");
+            }
+        }
+        else {
+            tkerr("invalid or missing expression after '-'");
+        }
+    }
+    return true;
+}
+
+bool expradd() {
+    if (exprmul()) {
+        if (expraddprim()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// exprrel: expradd exprRelPrim
+bool exprRelprim() {
+    if (consume(LESS)) {
+        if (expradd()) {
+            if (exprRelprim()) {
+                return true;
+            }
+            else {
+                tkerr("invalid or missing expression after '<'");
+            }
+        }
+        else {
+            tkerr("invalid or missing expression after '<'");
+        }
+    }
+    if (consume(LESSEQ)) {
+        if (expradd()) {
+            if (exprRelprim()) {
+                return true;
+            }
+            else {
+                tkerr("invalid or missing expression after '<='");
+            }
+        }
+        else {
+            tkerr("invalid or missing expression after '<='");
+        }
+    }
+    if (consume(GREATER)) {
+        if (expradd()) {
+            if (exprRelprim()) {
+                return true;
+            }
+            else {
+                tkerr("invalid or missing expression after '>'");
+            }
+        }
+        else {
+            tkerr("invalid or missing expression after '>'");
+        }
+    }
+    if (consume(GREATEREQ)) {
+        if (expradd()) {
+            if (exprRelprim()) {
+                return true;
+            }
+            else {
+                tkerr("invalid or missing expression after '>='");
+            }
+        }
+        else {
+            tkerr("invalid or missing expression after '>='");
+        }
+    }
+    return true;
+}
+bool exprrel() {
+    if (expradd()) {
+        if (exprRelprim()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// expreq: exprrel exprEqPrim
+bool exprEqprim() {
+    if (consume(EQUAL) || consume(NOTEQ)) {
+        if (exprrel()) {
+            if (exprEqprim()) {
+                return true;
+            }
+            else {
+                tkerr("invalid or missing expression after '==' or '!='");
+            }
+        }
+        else {
+            tkerr("invalid or missing expression after '==' or '!='");
+        }
+    }
+    return true;
+}
+
+bool expreq() {
+    if (exprrel()) {
+        if (exprEqprim()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// exprand: expreq exprAndPrim
+bool exprandprim() {
+    if (consume(AND)) {
+        if (expreq()) {
+            if (exprandprim()) {
+                return true;
+            }
+            else {
+                tkerr("invalid or missing expression after '&&'");
+            }
+        }
+        else {
+            tkerr("invalid or missing expression after '&&'");
+        }
+    }
+    return true;
+}
+
+bool exprand() {
+    if (expreq()) {
+        if (exprandprim()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// expror: exprand exprOrPrim
+bool exprOrprim() {
+    if (consume(OR)) {
+        if (exprand()) {
+            if (exprOrprim()) {
+                return true;
+            }
+            else {
+                tkerr("invalid or missing expression after '||'");
+            }
+        }
+        else {
+            tkerr("invalid or missing expression after '||'");
+        }
+    }
+    return true;
+}
+
+bool expror() {
+    if (exprand()) {
+        if (exprOrprim()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// exprassign: exprunary assign exprassign | expror
+bool exprassign() {
+    Token* start = itk;
+    if (exprunary()) {
+        if (consume(ASSIGN)) {
+            if (exprassign()) {
+                return true;
+            }
+            else {
+                tkerr("invalid or missing expression after '='");
+            }
+        }
+        itk = start;
+    }
+    if (expror()) {
+        return true;
+    }
+    return false;
+}
+
+// expr: exprassign
+bool expr() {
+    if (exprassign()) {
+        return true;
+    }
+    return false;
+}
+
+// stmcompound: lacc ( vardef | stm )* racc
+bool stmcompound() {
+    if (consume(LACC)) {
+        for (;;) {
+            if (vardef()) {}
+            else if (stm()) {}
+            else break;
+        }
+        if (consume(RACC)) {
+            return true;
+        }
+        else {
+            tkerr("expected '}' after compound statement or invalid expression in compound statement");
+        }
+    }
+    return false;
+}
+
+// stm: stmcompound | if lpar expr rpar stm (else stm)?
+//    | while lpar expr rpar stm | return expr? semicolon | expr? semicolon
+bool stm() {
+    if (stmcompound()) {
+        return true;
+    }
+    if (consume(IF)) {
+        if (consume(LPAR)) {
+            if (expr()) {
+                if (consume(RPAR)) {
+                    if (stm()) {
+                        if (consume(ELSE)) {
+                            if (stm())
+                                return true;
+                            else
+                                tkerr("expected statement after 'else' or invalid expression in statement");
+                            return true;
+                        }
+                        return true;
+                    }
+                    else {
+                        tkerr("expected statement after 'if' condition or invalid expression in statement");
+                    }
+                }
+                else {
+                    tkerr("expected ')' after 'if' condition or invalid expression in statement");
+                }
+            }
+            else {
+                tkerr("missing condition for 'if' statement");
+            }
+        }
+        else {
+            tkerr("expected '(' after 'if'");
+        }
+    }
+    if (consume(WHILE)) {
+        if (consume(LPAR)) {
+            if (expr()) {
+                if (consume(RPAR)) {
+                    if (stm()) {
+                        return true;
+                    }
+                    else {
+                        tkerr("missing statement after 'while' condition");
+                    }
+                }
+                else {
+                    tkerr("expected ')' after 'while' condition or invalid expression in statement");
+                }
+            }
+            else {
+                tkerr("missing condition for 'while' statement");
+            }
+        }
+        else {
+            tkerr("expected '(' after 'while'");
+        }
+    }
+    if (consume(RETURN)) {
+        if (expr()) {}
+        if (consume(SEMICOLON)) {
+            return true;
+        }
+        else {
+            tkerr("expected ';' after return statement");
+        }
+    }
+    if (expr()) {
+        if (consume(SEMICOLON)) {
+            return true;
+        }
+        else {
+            tkerr("expected ';' after expression statement");
+        }
+    }
+    if (consume(SEMICOLON)) {
+        return true; // empty statement
+    }
+    return false;
+}
+
+// unit: ( structdef | fndef | vardef )* end
+bool unit() {
+    for (;;) {
+        if (structdef()) {}
+        else if (fndef()) {}
+        else if (vardef()) {}
+        else break;
+    }
+    if (consume(END))
+        return true;
+    return false;
+}
+
+void parse(Token* tokens) {
+    itk = tokens;
+    if (!unit())
+        tkerr("syntax error");
 }

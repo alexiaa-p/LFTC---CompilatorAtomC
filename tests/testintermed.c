@@ -127,4 +127,4 @@ void main(){
 		puti(i);
 		i=i/2;
 		}
-    }
+    

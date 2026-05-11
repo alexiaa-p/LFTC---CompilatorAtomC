@@ -1,0 +1,18 @@
+﻿  lexer.c
+  main.c
+  parser.c
+  testintermed.c
+  testparser.c
+  utils.c
+  Generating Code...
+C:\Users\Mirela\Desktop\Poli\LFTC\parser\Compilator-AtomC-main\lexer.c(28,16): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+C:\Users\Mirela\Desktop\Poli\LFTC\parser\Compilator-AtomC-main\lexer.c(81,12): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Mirela\Desktop\Poli\LFTC\parser\Compilator-AtomC-main\tests\testintermed.c(2,5): error C2040: 'a': 'int [0]' differs in levels of indirection from 'int'
+C:\Users\Mirela\Desktop\Poli\LFTC\parser\Compilator-AtomC-main\tests\testintermed.c(3,5): error C2040: 'a': 'int [10]' differs in levels of indirection from 'int'
+C:\Users\Mirela\Desktop\Poli\LFTC\parser\Compilator-AtomC-main\tests\testintermed.c(4,5): error C2040: 'a': 'int [0]' differs in levels of indirection from 'int'
+C:\Users\Mirela\Desktop\Poli\LFTC\parser\Compilator-AtomC-main\tests\testintermed.c(5,8): error C2016: C requires that a struct or union have at least one member
+C:\Users\Mirela\Desktop\Poli\LFTC\parser\Compilator-AtomC-main\tests\testintermed.c(96,4): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\Mirela\Desktop\Poli\LFTC\parser\Compilator-AtomC-main\tests\testintermed.c(98,4): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\Mirela\Desktop\Poli\LFTC\parser\Compilator-AtomC-main\tests\testintermed.c(118,7): error C2133: 's': unknown size
+C:\Users\Mirela\Desktop\Poli\LFTC\parser\Compilator-AtomC-main\tests\testintermed.c(127,3): warning C4013: 'puti' undefined; assuming extern returning int
+C:\Users\Mirela\Desktop\Poli\LFTC\parser\Compilator-AtomC-main\tests\testparser.c(23,3): warning C4013: 'puti' undefined; assuming extern returning int

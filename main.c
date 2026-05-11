@@ -4,9 +4,9 @@
 #include "parser.h"
 
 int main() {
-	FILE* f = fopen("tests/testintermed.c", "r");
+	FILE* f = fopen("tests/testparser.c", "r");
 	if (!f) {
-		perror("Nu pot deschide testintermed.c");
+		perror("Nu pot deschide testparser.c");
 		return 1;
 	}
 
