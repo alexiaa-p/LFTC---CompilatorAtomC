@@ -5,9 +5,11 @@
 
 #include "parser.h"
 #include "utils.h"
+#include "ad.h"
 
 Token* itk;        // iteratorul in lista de atomi
 Token* consumedtk; // ultimul atom consumat
+Symbol *owner = NULL; // simbolul domeniului curent (NULL pentru domeniul global)
 
 void tkerr(const char* fmt, ...) {
     fprintf(stderr, "error in line %d: ", itk->line);
@@ -31,39 +33,108 @@ bool consume(int code) {
 // forward declarations
 bool expr();
 bool stm();
-bool stmcompound();
+bool stmcompound(bool newDomain);
 
 // typebase: type_int | type_double | type_char | struct id
-bool typebase() {
-    if (consume(TYPE_INT))    return true;
-    if (consume(TYPE_DOUBLE)) return true;
-    if (consume(TYPE_CHAR))   return true;
+// MODIFICARE ANALIZA DOMENIU
+// daca tipul de baza este o structura, ea trebuie sa fie deja definita anterior
+bool typebase(Type *t) {
+    t->n = -1; // nu este vector
+    Token *start = itk;
+    if (consume(TYPE_INT)) 
+    { 
+        t->tb = TB_INT; 
+          return true;
+    }
+    if (consume(TYPE_DOUBLE)) 
+    {
+        t->tb = TB_DOUBLE; 
+        return true;
+    }
+    if (consume(TYPE_CHAR))  
+    {
+        t->tb = TB_CHAR;
+        return true;
+    }
     if (consume(STRUCT)) {
-        if (consume(ID)) return true;
+        if (consume(ID)) 
+        {
+            Token *tkName = consumedtk;
+            t->tb = TB_STRUCT;
+            t->s  = findSymbol(tkName->text);
+            if (!t->s)              
+              tkerr("structure %s is not defined", tkName->text);
+            return true;
+        }
         else tkerr("expected struct name");
     }
+    itk = start;
     return false;
 }
 
 // arraydecl: lbracket int? rbracket
-bool arraydecl() {
-    if (consume(LBRACKET)) {
-        if (consume(INT)) {}
-        if (consume(RBRACKET))
+// MODIFICARE ANALIZA DOMENIU
+bool arrayDecl(Type *t){
+    Token *start = itk;
+    if(consume(LBRACKET)){
+        if(consume(INT)){
+            Token *tkSize = consumedtk;
+            t->n = tkSize->i;  
+        }else{
+            t->n = 0; //array fara dimensiune specificata
+        }
+        if(consume(RBRACKET))
             return true;
         else
-            tkerr("expected ']' after array declaration");
+            tkerr("expected ']' after array declaration or invalid expression in array declaration");
     }
+    itk = start;
     return false;
 }
 
 // vardef: typebase id arraydecl? semicolon
+// MODIFICARE ANALIZA DOMENIU
+// numele variabilei trebuie sa fie unic in domeniu
+// variabilele de tip vector trebuie sa aiba dimensiunea data (nu se accepta: int v[])
 bool vardef() {
-    if (typebase()) {
+    Token* start = itk;
+    Type t;
+    if (typebase(&t)) {
         if (consume(ID)) {
-            if (arraydecl()) {}
+            Token *tkName = consumedtk;
+            if (arrayDecl(&t)) {
+                if(t.n == 0)
+                    tkerr("a vector variable must have a specified dimension");
+            }
             if (consume(SEMICOLON))
+            {
+                Symbol *var = findSymbolInDomain(symTable, tkName->text);
+                if (var)
+                    tkerr("symbol redefinition: %s", tkName->text);
+                var = newSymbol(tkName->text, SK_VAR);
+                var->type = t;
+                var->owner = owner;
+                addSymbolToDomain(symTable, var);
+                if(owner)
+                {
+                    switch(owner->kind)
+                    {
+                        case SK_FN:
+                            var->varIdx = symbolsLen(owner->fn.locals);
+                            addSymbolToList(&owner->fn.locals, dupSymbol(var));
+                            break;
+                        case SK_STRUCT:
+                            var->varIdx = typeSize(&owner->type);
+                            addSymbolToList(&owner->structMembers, dupSymbol(var));
+                            break;
+                    }
+                }
+                else
+                {
+                    var->varMem = safeAlloc(typeSize(&t));
+                }
                 return true;
+            }
             else
                 tkerr("expected ';' after variable definition");
         }
@@ -74,18 +145,36 @@ bool vardef() {
 }
 
 // structdef: struct id lacc vardef* racc semicolon
+//MODIFICARE ANALIZA DOMENIU
+// numele structurii trebuie sa fie unic in domeniu
+// in interiorul structurii nu pot exista doua variabile cu acelasi nume
 bool structdef() {
     Token* start = itk;
     if (consume(STRUCT)) {
         if (consume(ID)) {
+            Token *tkName = consumedtk;
             if (consume(LACC)) {
+                Symbol *s=findSymbolInDomain(symTable,tkName->text);
+                if(s)
+                    tkerr("symbol redefinition: %s", tkName->text);
+                s = addSymbolToDomain(symTable, newSymbol(tkName->text, SK_STRUCT));
+                s->type.tb=TB_STRUCT;
+                s->type.s=s;
+                s->type.n=-1;
+                pushDomain();
+                owner = s;
+                
                 for (;;) {
                     if (vardef());
                     else break;
                 }
                 if (consume(RACC)) {
                     if (consume(SEMICOLON))
+                    {
+                        owner = NULL;
+                        dropDomain();
                         return true;
+                    }
                     else
                         tkerr("expected ';' after struct definition");
                 }
@@ -99,24 +188,61 @@ bool structdef() {
 }
 
 // fnparam: typebase id arraydecl?
+// numele parametrului trebuie sa fie unic in domeniu
+// parametrii pot fi vectori cu dimensiune data, dar in acest caz li se sterge
+//dimensiunea ( int v[10] -> int v[] )
+
 bool fnparam() {
-    if (typebase()) {
+    Token *start = itk;
+    Type t;
+    if (typebase(&t)) {
         if (consume(ID)) {
-            if (arraydecl()) {}
+                Token *tkName = consumedtk;
+            if (arrayDecl(&t)) {
+                t.n = 0;
+            }
+            Symbol *param = findSymbolInDomain(symTable, tkName->text);
+            if (param)
+                tkerr("symbol redefinition: %s", tkName->text);
+            param = newSymbol(tkName->text, SK_PARAM);
+            param->type = t;
+            param->owner = owner;
+            param->paramIdx = symbolsLen(owner->fn.params);
+            // parametrul este adaugat atat la domeniul curent, cat si la parametrii fn
+            addSymbolToDomain(symTable, param);
+            addSymbolToList(&owner->fn.params, dupSymbol(param));
             return true;
         }
         else
             tkerr("expected parameter name");
     }
+    itk = start;
     return false;
 }
 
 // fndef: ( typebase | void ) id lpar ( fnparam ( comma fnparam )* )? rpar stmcompound
+// MODIFICARE ANALIZA DOMENIU
+// numele functiei trebuie sa fie unic in domeniu
+// domeniul local functiei incepe imediat dupa LPAR
+// corpul functiei {...} nu defineste un nou subdomeniu in domeniul local functiei
 bool fndef() {
     Token* start = itk;
-    if (typebase() || consume(VOID)) {
+    Type t;
+    bool consumedVoid = false;
+    if (typebase(&t) || (consumedVoid = consume(VOID))) {
+        if (consumedVoid)
+            t.tb = TB_VOID;
         if (consume(ID)) {
+            Token *tkName = consumedtk;
             if (consume(LPAR)) {
+                Symbol *fn = findSymbolInDomain(symTable, tkName->text);
+                if (fn)
+                    tkerr("symbol redefinition: %s", tkName->text);
+                fn = newSymbol(tkName->text, SK_FN);
+                fn->type = t;
+                addSymbolToDomain(symTable, fn);
+                owner = fn;
+                pushDomain();
                 if (fnparam()) {
                     while (consume(COMMA)) {
                         if (!fnparam())
@@ -124,8 +250,12 @@ bool fndef() {
                     }
                 }
                 if (consume(RPAR)) {
-                    if (stmcompound())
+                    if (stmcompound(false))
+                    {
+                        dropDomain();
+                        owner = NULL;
                         return true;
+                    }
                     else
                         tkerr("expected compound statement after function declaration or invalid expression in function definition");
                 }
@@ -243,10 +373,15 @@ bool exprunary() {
 }
 
 // exprcast: lpar typebase arraydecl? rpar exprcast | exprunary
+// MODIFICARE ANALIZA DOMENIU
+// deoarece typeBase si arrayDecl au nevoie de un argument, se adauga acesta
+// t va fi folosit ulterior
+
 bool exprcast() {
     if (consume(LPAR)) {
-        if (typebase()) {
-            if (arraydecl()) {}
+        Type t;
+        if (typebase(&t)) {
+            if (arrayDecl(&t)) {}
             if (consume(RPAR)) {
                 if (exprcast()) {
                     return true;
@@ -525,27 +660,39 @@ bool expr() {
 }
 
 // stmcompound: lacc ( vardef | stm )* racc
-bool stmcompound() {
+// MODIFICARE ANALIZA DOMENIU
+// se defineste un nou domeniu doar la cerere
+
+bool stmcompound(bool newDomain) {
+    Token* start = itk;
     if (consume(LACC)) {
+        if(newDomain)
+             pushDomain();
         for (;;) {
             if (vardef()) {}
             else if (stm()) {}
             else break;
         }
         if (consume(RACC)) {
+            if(newDomain)
+                dropDomain();
             return true;
         }
         else {
             tkerr("expected '}' after compound statement or invalid expression in compound statement");
         }
     }
+    itk = start;
     return false;
 }
 
 // stm: stmcompound | if lpar expr rpar stm (else stm)?
 //    | while lpar expr rpar stm | return expr? semicolon | expr? semicolon
+// MODIFICARE ANALIZA DOMENIU
+// corpul compus {...} al instructiunilor defineste un nou domeniu
+
 bool stm() {
-    if (stmcompound()) {
+    if (stmcompound(true)) {
         return true;
     }
     if (consume(IF)) {

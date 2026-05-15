@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "lexer.h"
 #include "parser.h"
+#include "ad.h"
 
 int main() {
-	FILE* f = fopen("tests/testparser.c", "r");
+	FILE* f = fopen("tests/testad.c", "r");
 	if (!f) {
 		perror("Nu pot deschide testparser.c");
 		return 1;
@@ -38,9 +40,16 @@ int main() {
     }
 
 	//parser
+	//doemniu global
+	pushDomain();
 	parse(toks);
-	printf("Program corect sintactic\n");
+	//printf("Program corect sintactic\n");
+
+	printf("\n");
+	showDomain(symTable,"global"); 
+    dropDomain();
 
 	free(code);
+	free(toks);
 	return 0;
 }
