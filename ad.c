@@ -26,7 +26,8 @@ int typeBaseSize(Type *t){
 
 int typeSize(Type *t){
 	if(t->n<0)return typeBaseSize(t);
-	if(t->n==0)return sizeof(void*);
+	if(t->n==0)
+		return typeBaseSize(t);
 	return t->n*typeBaseSize(t);
 	}
 

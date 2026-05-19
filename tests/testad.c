@@ -6,12 +6,13 @@ double p[100];
 struct S1{
 	int i;
 	double d[2];
+	int a;
 	char x;
 	};
 struct S1 p1;
 struct S1 vp[10];
 
-double sum(double x[5],int n){
+double sum(double x[5],int n, char c, int m[4]) {
 	double r;
 	int i;
 	r=0;
@@ -25,6 +26,6 @@ double sum(double x[5],int n){
 	return r;
 	}
 	
-void f(struct S1 p){
+void f(struct S1 p) {
 	puti(p.i);
-	}
+}

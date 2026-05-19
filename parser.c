@@ -40,6 +40,7 @@ bool stmcompound(bool newDomain);
 // daca tipul de baza este o structura, ea trebuie sa fie deja definita anterior
 bool typebase(Type *t) {
     t->n = -1; // nu este vector
+    t->declared_n = -1;
     Token *start = itk;
     if (consume(TYPE_INT)) 
     { 

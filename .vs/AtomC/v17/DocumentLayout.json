@@ -1,0 +1,122 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\ad.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:ad.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\tests\\testad.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:tests\\testad.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\ad.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:ad.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\parser.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:parser.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\tests\\simboluri-rezultate.txt||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:tests\\simboluri-rezultate.txt||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\main.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:main.c||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 3,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "simboluri-rezultate.txt",
+              "DocumentMoniker": "C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\tests\\simboluri-rezultate.txt",
+              "RelativeDocumentMoniker": "tests\\simboluri-rezultate.txt",
+              "ToolTip": "C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\tests\\simboluri-rezultate.txt",
+              "RelativeToolTip": "tests\\simboluri-rezultate.txt",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
+              "WhenOpened": "2026-05-18T12:10:10.65Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ad.h",
+              "DocumentMoniker": "C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\ad.h",
+              "RelativeDocumentMoniker": "ad.h",
+              "ToolTip": "C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\ad.h",
+              "RelativeToolTip": "ad.h",
+              "ViewState": "AgIAAAoAAAAAAAAAAAAmwBcAAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2026-05-18T09:32:17.06Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "parser.c",
+              "DocumentMoniker": "C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\parser.c",
+              "RelativeDocumentMoniker": "parser.c",
+              "ToolTip": "C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\parser.c",
+              "RelativeToolTip": "parser.c",
+              "ViewState": "AgIAAGQAAAAAAAAAAAAAAC4AAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2026-05-18T09:16:44.445Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ad.c",
+              "DocumentMoniker": "C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\ad.c",
+              "RelativeDocumentMoniker": "ad.c",
+              "ToolTip": "C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\ad.c",
+              "RelativeToolTip": "ad.c",
+              "ViewState": "AgIAAEUAAAAAAAAAAAAAAB0AAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2026-05-18T09:13:53.304Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "testad.c",
+              "DocumentMoniker": "C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\tests\\testad.c",
+              "RelativeDocumentMoniker": "tests\\testad.c",
+              "ToolTip": "C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\tests\\testad.c",
+              "RelativeToolTip": "tests\\testad.c",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAAA4AAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2026-05-18T09:11:59.595Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "main.c",
+              "DocumentMoniker": "C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\main.c",
+              "RelativeDocumentMoniker": "main.c",
+              "ToolTip": "C:\\Users\\Mirela\\Desktop\\Poli\\LFTC\\AtomC\\main.c",
+              "RelativeToolTip": "main.c",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000423|",
+              "WhenOpened": "2026-05-18T09:10:54.929Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

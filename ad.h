@@ -19,6 +19,12 @@ typedef struct{		// the type of a symbol
 	//		n==0 - array without specified dimension: int v[]
 	//		n>0 - array with specified dimension: double v[10]
 	int n;
+
+	// declared number of elements for arrays (preserve declaration)
+	//  -1 = not applicable (not an array)
+	//   0 = array without specified dimension (int v[])
+	//  >0 = number of elements declared (int v[4] -> declared_n==4)
+	int declared_n;
 	}Type;
 
 // returns the size of type t in bytes
